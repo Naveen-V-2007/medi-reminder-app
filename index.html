@@ -440,12 +440,44 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
+  /* ── BOTTOM NAV mobile ── */
+  #bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 8px 0 14px;
+    z-index: 100;
+    transition: background 0.3s, border 0.3s;
+  }
+  .bottom-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .bn-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 10px;
+    color: var(--text2);
+    transition: all 0.2s;
+  }
+  .bn-item.active { color: var(--accent); }
+  .bn-icon { font-size: 1.3rem; }
+  .bn-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.3px; }
+
   /* ── MOBILE ── */
   @media (max-width: 768px) {
     #sidebar { display: none; }
-    .page { padding: 20px; }
+    #bottom-nav { display: block; }
+    .page { padding: 20px; padding-bottom: 90px; }
     .form-grid { grid-template-columns: 1fr; }
-    .stats-row { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; gap: 12px; }
     .time-slot-grid { grid-template-columns: repeat(2,1fr); }
   }
 
@@ -634,6 +666,32 @@
 
   </main>
 </div>
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav">
+  <div class="bottom-nav-inner">
+    <div class="bn-item active" onclick="showPage('dashboard'); setActivebn(this)">
+      <span class="bn-icon">⬛</span>
+      <span class="bn-label">Dashboard</span>
+    </div>
+    <div class="bn-item" onclick="showPage('add'); setActivebn(this)">
+      <span class="bn-icon">＋</span>
+      <span class="bn-label">Add</span>
+    </div>
+    <div class="bn-item" onclick="showPage('caretaker'); setActivebn(this)">
+      <span class="bn-icon">👤</span>
+      <span class="bn-label">Caretaker</span>
+    </div>
+    <div class="bn-item" onclick="showPage('alerts'); setActivebn(this)">
+      <span class="bn-icon">🔔</span>
+      <span class="bn-label">Alerts</span>
+    </div>
+    <div class="bn-item" onclick="toggleDark()">
+      <span class="bn-icon">🌙</span>
+      <span class="bn-label">Theme</span>
+    </div>
+  </div>
+</nav>
 
 <!-- TOAST -->
 <div id="toast"></div>
@@ -1172,6 +1230,14 @@ document.getElementById('install-banner').addEventListener('click', async () => 
     deferredPrompt = null;
   }
 });
+
+// ═══════════════════════════════════════════
+//  BOTTOM NAV
+// ═══════════════════════════════════════════
+function setActivebn(el) {
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
 
 // ═══════════════════════════════════════════
 //  INIT
