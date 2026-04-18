@@ -57,10 +57,22 @@ self.addEventListener('push', e => {
 // ── NOTIFICATION CLICK
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+  const speakText = e.notification.data?.speak;
+
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      if (list.length > 0) return list[0].focus();
-      return clients.openWindow('/');
+      if (list.length > 0) {
+        const win = list[0];
+        win.focus();
+        if (speakText) win.postMessage({ type: 'SPEAK', text: speakText });
+        return;
+      }
+      // App not open — open it, wait for load, then speak
+      return clients.openWindow('/').then(win => {
+        if (win && speakText) {
+          setTimeout(() => win.postMessage({ type: 'SPEAK', text: speakText }), 2500);
+        }
+      });
     })
   );
 });
@@ -79,12 +91,14 @@ async function checkMedicines() {
     // Check schedule
     for (const [slot, time] of Object.entries(med.schedule || {})) {
       if (time === currentTime) {
+        const speakText = `${med.patientName}, take your ${med.medName} — ${med.colour?.name || ''} tablet — now`;
         await self.registration.showNotification('💊 Medicine Reminder', {
-          body: `${med.patientName}, take your ${med.medName} — ${med.colour?.name || ''} tablet — now`,
+          body: speakText,
           icon: '/icon-192.png',
-          vibrate: [200, 100, 200],
+          vibrate: [300, 100, 300, 100, 300],
           requireInteraction: true,
-          tag: `med_${med.id}_${currentTime}`
+          tag: `med_${med.id}_${currentTime}`,
+          data: { speak: speakText }
         });
       }
     }
@@ -94,11 +108,14 @@ async function checkMedicines() {
       const alertKey = `stock_alerted_${med.id}_${now.toDateString()}`;
       const alerted = await getFlag(alertKey);
       if (!alerted) {
+        const speakText = `${med.patientName}, please refill ${med.medName}. Only ${med.stock} tablet(s) left!`;
         await self.registration.showNotification('⚠ Low Stock Alert', {
-          body: `${med.patientName}, please refill ${med.medName}. Only ${med.stock} tablet(s) left!`,
+          body: speakText,
           icon: '/icon-192.png',
+          vibrate: [200, 100, 200],
           requireInteraction: true,
-          tag: `stock_${med.id}`
+          tag: `stock_${med.id}`,
+          data: { speak: speakText }
         });
         await setFlag(alertKey);
       }

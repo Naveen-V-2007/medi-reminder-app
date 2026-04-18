@@ -906,7 +906,8 @@ function fireStockAlert(med) {
     body: msg,
     icon: 'icon-192.png',
     requireInteraction: true,
-    tag: 'stock_' + med.id
+    tag: 'stock_' + med.id,
+    data: { speak: msg }
   });
   logNotification(med.patientName, msg);
 }
@@ -995,9 +996,10 @@ function fireGroupNotification(patientName, meds) {
       body: meds.length === 1 ? msg : `Time to take ${meds.length} medicines:\n${body}`,
       icon: 'icon-192.png',
       badge: 'icon-192.png',
-      vibrate: [200, 100, 200],
+      vibrate: [300, 100, 300, 100, 300],
       requireInteraction: true,
-      tag: 'med_' + patientName
+      tag: 'med_' + patientName,
+      data: { speak: msg }
     });
   }
 
@@ -1286,9 +1288,24 @@ document.addEventListener('DOMContentLoaded', () => {
   requestNotifPermission();
   startScheduler();
 
-  // Service Worker
+  // Dynamic SW path — works on GitHub Pages, localhost, and any subdirectory
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    const base   = location.href.substring(0, location.href.lastIndexOf('/') + 1);
+    const swPath  = base + 'sw.js';
+    const scope   = location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1) || '/';
+    navigator.serviceWorker.register(swPath, { scope })
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.warn('SW failed:', err));
+    // Respond to SW data requests (needed for offline notification checks)
+    navigator.serviceWorker.addEventListener('message', e => {
+      // SW asking for localStorage data
+      if (e.data?.type === 'GET_DATA') e.ports[0].postMessage(getData());
+      // Speak when user taps notification
+      if (e.data?.type === 'SPEAK') {
+        speakReminder(e.data.text);
+        playBeep();
+      }
+    });
   }
 });
 </script>
