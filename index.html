@@ -903,7 +903,8 @@ function scheduleNotifications(med) { /* handled by main loop */ }
 
 function startScheduler() {
   checkReminders();
-  setInterval(checkReminders, 30000);
+  // Check every 10 seconds for reliability
+  setInterval(checkReminders, 10000);
 }
 
 function checkReminders() {
@@ -912,12 +913,18 @@ function checkReminders() {
   const hh = now.getHours().toString().padStart(2,'0');
   const mm = now.getMinutes().toString().padStart(2,'0');
   const currentTime = `${hh}:${mm}`;
+  const todayKey = now.toDateString();
 
   // Group due medicines by patient
   const dueByPatient = {};
   data.medicines.forEach(med => {
     Object.values(med.schedule).forEach(t => {
       if (t === currentTime) {
+        // Only fire once per minute per medicine
+        const firedKey = `fired_${med.id}_${currentTime}_${todayKey}`;
+        if (localStorage.getItem(firedKey)) return;
+        localStorage.setItem(firedKey, '1');
+
         const key = med.patientName.toLowerCase().trim();
         if (!dueByPatient[key]) dueByPatient[key] = { patientName: med.patientName, meds: [] };
         dueByPatient[key].meds.push(med);
@@ -930,13 +937,13 @@ function checkReminders() {
     fireGroupNotification(group.patientName, group.meds);
   });
 
-  // Stock alerts
+  // Stock alerts — once per day
   data.medicines.forEach(med => {
     if (med.stock <= 3) {
-      const lastStockAlert = localStorage.getItem('stock_alert_'+med.id+'_'+now.toDateString());
+      const lastStockAlert = localStorage.getItem('stock_alert_'+med.id+'_'+todayKey);
       if (!lastStockAlert) {
         fireStockAlert(med);
-        localStorage.setItem('stock_alert_'+med.id+'_'+now.toDateString(), '1');
+        localStorage.setItem('stock_alert_'+med.id+'_'+todayKey, '1');
       }
     }
   });
