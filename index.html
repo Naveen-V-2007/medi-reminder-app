@@ -827,8 +827,35 @@ function resetForm() {
 //  NOTIFICATIONS
 // ═══════════════════════════════════════════
 async function requestNotifPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    await Notification.requestPermission();
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    const result = await Notification.requestPermission();
+    if (result === 'granted') {
+      // On Android PWA, confirm SW notifications work
+      showSWNotification('✅ MediCare Notifications Ready', {
+        body: 'You will now receive medicine reminders on this device.',
+        icon: 'icon-192.png',
+        tag: 'welcome'
+      });
+    }
+  }
+}
+
+// ── SW-BASED NOTIFICATION (works on Android + Desktop) ──
+// Android Chrome/Brave REQUIRES notifications via Service Worker.
+// new Notification() from the page silently fails on Android.
+function showSWNotification(title, options) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready
+      .then(reg => reg.showNotification(title, options))
+      .catch(() => {
+        // Fallback to page notification on desktop if SW fails
+        try { new Notification(title, options); } catch(e) {}
+      });
+  } else {
+    // Non-SW environment (desktop fallback)
+    try { new Notification(title, options); } catch(e) {}
   }
 }
 
@@ -861,30 +888,26 @@ function fireNotification(med) {
   const msg = `${med.patientName}, take your ${med.medName} — ${med.colour.name} tablet — now`;
   playBeep();
   speakReminder(msg);
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(`💊 Medicine Reminder`, {
-      body: msg,
-      icon: 'icon-192.png',
-      badge: 'icon-192.png',
-      vibrate: [200, 100, 200],
-      requireInteraction: true,
-      tag: 'med_' + med.id
-    });
-  }
+  showSWNotification(`💊 Medicine Reminder`, {
+    body: msg,
+    icon: 'icon-192.png',
+    badge: 'icon-192.png',
+    vibrate: [200, 100, 200],
+    requireInteraction: true,
+    tag: 'med_' + med.id
+  });
   logNotification(med.patientName, msg);
 }
 
 function fireStockAlert(med) {
   const msg = `${med.patientName}, you need to refill ${med.medName}. Only ${med.stock} tablets remaining`;
   speakReminder(msg);
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(`⚠ Low Stock Alert`, {
-      body: msg,
-      icon: 'icon-192.png',
-      requireInteraction: true,
-      tag: 'stock_' + med.id
-    });
-  }
+  showSWNotification(`⚠ Low Stock Alert`, {
+    body: msg,
+    icon: 'icon-192.png',
+    requireInteraction: true,
+    tag: 'stock_' + med.id
+  });
   logNotification(med.patientName, msg);
 }
 
@@ -968,7 +991,7 @@ function fireGroupNotification(patientName, meds) {
       ? msg
       : meds.map(m => `• ${m.colour.name} ${m.medName} (${m.doses} dose)`).join('\n');
 
-    new Notification(`💊 ${patientName} — Medicine Reminder`, {
+    showSWNotification(`💊 ${patientName} — Medicine Reminder`, {
       body: meds.length === 1 ? msg : `Time to take ${meds.length} medicines:\n${body}`,
       icon: 'icon-192.png',
       badge: 'icon-192.png',
