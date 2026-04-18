@@ -1,50 +1,67 @@
-# Welcome to your Expo app 👋
+# MediCare – Medicine Reminder PWA
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Features
+- Add patient name, medicine name, colour, doses, stock
+- Morning / Afternoon / Evening / Night schedule with time picker
+- Caretaker name, phone, email
+- Dashboard with stats, low stock alerts, medicine table
+- Dark mode
+- Fully offline (Service Worker + localStorage)
+- Lock screen notifications + voice alert (Web Speech API)
+- Sound alert (Web Audio API)
+- Low stock alert (< 3 tablets) — voice + notification
+- Installable as Android APK via PWABuilder
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+## Run Locally
 ```bash
-npm run reset-project
+# Option 1 — Python
+python3 -m http.server 8080
+# Open: http://localhost:8080
+
+# Option 2 — Node
+npx serve .
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+> IMPORTANT: Must be served over HTTP/HTTPS (not file://) for Service Worker and Notifications to work.
 
-## Learn more
+## Deploy Free (for PWABuilder APK)
+1. Push this folder to GitHub
+2. Enable GitHub Pages (Settings → Pages → Deploy from main)
+3. Your URL: https://yourusername.github.io/medicine-reminder
 
-To learn more about developing your project with Expo, look at the following resources:
+## Convert to APK
+1. Go to https://pwabuilder.com
+2. Enter your deployed URL
+3. Click "Package for Stores" → Android → Download APK
+4. Install on phone: allow "Install unknown apps" in settings
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Notification Behaviour
+| Situation | Works? |
+|---|---|
+| App open | ✅ Voice + sound + notification |
+| App minimized / phone locked | ✅ Notification shown |
+| App completely killed | ⚠ Service Worker may still fire (Android dependent) |
+| With Firebase FCM (future) | ✅ 100% guaranteed even when killed |
 
-## Join the community
+## Add Icons
+Place these files in the same folder:
+- `icon-192.png` (192×192)
+- `icon-512.png` (512×512)
 
-Join our community of developers creating universal apps.
+Use any medicine or pill icon.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Future: Firebase Cloud Notifications
+To guarantee notifications even when app is killed:
+1. Create Firebase project
+2. Add `firebase-messaging-sw.js`
+3. Store FCM tokens in Firestore
+4. Use Cloud Functions to trigger alerts
+
+## Tech Stack
+- HTML + CSS + Vanilla JS
+- localStorage (offline data)
+- Service Worker (offline + background)
+- Web Notifications API (lock screen)
+- Web Speech API (voice alerts)
+- Web Audio API (sound)
+- PWABuilder (APK conversion)
