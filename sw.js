@@ -1,7 +1,11 @@
 // MediCare Service Worker — Offline + Background Notifications
-const CACHE = 'medicare-v2';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
-
+const CACHE = 'medicare-v1';
+const ASSETS = [
+  '/medi-reminder-app/',
+  '/medi-reminder-app/index.html',
+  '/medi-reminder-app/manifest.json'
+];
+ 
 // ── INSTALL: cache all assets
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -9,7 +13,7 @@ self.addEventListener('install', e => {
   );
   self.skipWaiting();
 });
-
+ 
 // ── ACTIVATE: clean old caches
 self.addEventListener('activate', e => {
   e.waitUntil(
@@ -19,7 +23,7 @@ self.addEventListener('activate', e => {
   );
   self.clients.claim();
 });
-
+ 
 // ── FETCH: serve from cache, fallback to network
 self.addEventListener('fetch', e => {
   e.respondWith(
@@ -30,14 +34,14 @@ self.addEventListener('fetch', e => {
     })).catch(() => caches.match('/index.html'))
   );
 });
-
+ 
 // ── BACKGROUND SYNC: check reminders every minute
 self.addEventListener('periodicsync', e => {
   if (e.tag === 'medicine-check') {
     e.waitUntil(checkMedicines());
   }
 });
-
+ 
 // ── PUSH: receive push from server (future Firebase integration)
 self.addEventListener('push', e => {
   if (!e.data) return;
@@ -53,15 +57,15 @@ self.addEventListener('push', e => {
     })
   );
 });
-
+ 
 // ── NOTIFICATION CLICK
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const speakText = e.notification.data?.speak;
-
+ 
   // Get the correct app URL from SW scope (works on GitHub Pages + localhost)
   const appUrl = self.registration.scope;
-
+ 
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       // If app already open — focus it and speak
@@ -80,17 +84,17 @@ self.addEventListener('notificationclick', e => {
     })
   );
 });
-
+ 
 // ── CHECK MEDICINES (called by periodic sync or message)
 async function checkMedicines() {
   const data = await getStoredData();
   if (!data) return;
-
+ 
   const now = new Date();
   const hh = now.getHours().toString().padStart(2, '0');
   const mm = now.getMinutes().toString().padStart(2, '0');
   const currentTime = `${hh}:${mm}`;
-
+ 
   for (const med of data.medicines) {
     // Check schedule
     for (const [slot, time] of Object.entries(med.schedule || {})) {
@@ -106,7 +110,7 @@ async function checkMedicines() {
         });
       }
     }
-
+ 
     // Check low stock
     if (med.stock <= 3) {
       const alertKey = `stock_alerted_${med.id}_${now.toDateString()}`;
@@ -115,7 +119,8 @@ async function checkMedicines() {
         const speakText = `${med.patientName}, please refill ${med.medName}. Only ${med.stock} tablet(s) left!`;
         await self.registration.showNotification('⚠ Low Stock Alert', {
           body: speakText,
-          icon: '/icon-192.png',
+          icon: '/medi-reminder-app/icon-192.png'
+          badge: '/medi-reminder-app/icon-192.png'
           vibrate: [200, 100, 200],
           requireInteraction: true,
           tag: `stock_${med.id}`,
@@ -126,7 +131,7 @@ async function checkMedicines() {
     }
   }
 }
-
+ 
 // ── SIMPLE KV via CacheStorage for flags
 async function getFlag(key) {
   try {
@@ -141,7 +146,7 @@ async function setFlag(key) {
     await c.put('/' + key, new Response('1'));
   } catch {}
 }
-
+ 
 // ── READ localStorage via client message
 async function getStoredData() {
   const clientList = await clients.matchAll({ includeUncontrolled: true });
@@ -153,15 +158,15 @@ async function getStoredData() {
     setTimeout(() => resolve(null), 2000);
   });
 }
-
+ 
 // ── RECEIVE MESSAGES from page
 self.addEventListener('message', e => {
   if (e.data?.type === 'CHECK_NOW') checkMedicines();
 });
-
+ 
 // ── PERIODIC ALARM via setTimeout loop (fallback when no PeriodicSync)
-// This runs as long as SW is alive — checks every 40 seconds
+// This runs as long as SW is alive
 function startInternalClock() {
-  setInterval(() => checkMedicines(), 40000);
+  setInterval(() => checkMedicines(), 60000);
 }
 startInternalClock();
