@@ -1,5 +1,5 @@
 // MediCare Service Worker — Offline + Background Notifications
-const CACHE = 'medicare-v1';
+const CACHE = 'medicare-v2';
 const ASSETS = [
   '/medi-reminder-app/',
   '/medi-reminder-app/index.html',
