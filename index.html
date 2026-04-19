@@ -728,12 +728,13 @@ function sendCaretakerEmail(med, type = 'reminder') {
     .join(', ');
 
   const params = {
-    caretaker_name : med.caretaker.name || 'Caretaker',
-    patient_name   : med.patientName,
-    med_name       : med.medName,
-    med_colour     : med.colour?.name || '',
-    scheduled_time : scheduleStr,
-    stock          : med.stock,
+    caretaker_name  : med.caretaker.name || 'Caretaker',
+    caretaker_email : med.caretaker.email,
+    patient_name    : med.patientName,
+    med_name        : med.medName,
+    med_colour      : med.colour?.name || '',
+    scheduled_time  : scheduleStr,
+    stock           : med.stock,
   };
 
   emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params)
@@ -965,8 +966,8 @@ function scheduleNotifications(med) { /* handled by main loop */ }
 
 function startScheduler() {
   checkReminders();
-  // Check every 10 seconds for reliability
-  setInterval(checkReminders, 10000);
+  // Check every 40 seconds
+  setInterval(checkReminders, 40000);
 }
 
 function checkReminders() {
