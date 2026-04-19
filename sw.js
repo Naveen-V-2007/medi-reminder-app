@@ -61,30 +61,33 @@ self.addEventListener('push', e => {
 // ── NOTIFICATION CLICK
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+
   const speakText = e.notification.data?.speak;
- 
-  // Get the correct app URL from SW scope (works on GitHub Pages + localhost)
-  const appUrl = self.registration.scope;
- 
+
+  const appUrl = self.location.origin + '/medi-reminder-app/';
+
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      // If app already open — focus it and speak
-      if (list.length > 0) {
-        const win = list[0];
-        win.focus();
-        if (speakText) win.postMessage({ type: 'SPEAK', text: speakText });
-        return;
+      for (const client of list) {
+        if (client.url.includes('/medi-reminder-app/')) {
+          client.focus();
+          if (speakText) {
+            client.postMessage({ type: 'SPEAK', text: speakText });
+          }
+          return;
+        }
       }
-      // App not open — open correct URL, wait for load, then speak
+
       return clients.openWindow(appUrl).then(win => {
         if (win && speakText) {
-          setTimeout(() => win.postMessage({ type: 'SPEAK', text: speakText }), 2500);
+          setTimeout(() => {
+            win.postMessage({ type: 'SPEAK', text: speakText });
+          }, 2000);
         }
       });
     })
   );
-});
- 
+}); 
 // ── CHECK MEDICINES (called by periodic sync or message)
 async function checkMedicines() {
   const data = await getStoredData();
