@@ -719,32 +719,42 @@ const EMAILJS_KEY      = 'p2si1_rwZLTHcZkHr';
 
 emailjs.init(EMAILJS_KEY);
 
-function sendCaretakerEmail(med, type = 'reminder') {
-  // Only send if caretaker email exists
-  if (!med.caretaker?.email) return;
+function sendCaretakerEmail(med, type = 'reminder', delay = 0) {
+  console.log("📧 Attempting email...", med);
 
-  const scheduleStr = Object.entries(med.schedule)
+  // Stop if no email
+  if (!med.caretaker || !med.caretaker.email) {
+    console.log("❌ No caretaker email");
+    return;
+  }
+
+  // Format schedule
+  const scheduleStr = Object.entries(med.schedule || {})
     .map(([slot, time]) => `${slot} ${time}`)
     .join(', ');
 
+  // Unique params (IMPORTANT to avoid duplicate blocking)
   const params = {
     caretaker_name  : med.caretaker.name || 'Caretaker',
     caretaker_email : med.caretaker.email,
     patient_name    : med.patientName,
     med_name        : med.medName,
     med_colour      : med.colour?.name || '',
-    scheduled_time  : scheduleStr,
+    scheduled_time  : scheduleStr + ' | ' + new Date().toLocaleTimeString(),
     stock           : med.stock,
   };
 
-  emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params)
-    .then(() => {
-      console.log(`Email sent to ${med.caretaker.email} for ${med.patientName}`);
-      showToast(`📧 Caretaker alerted: ${med.caretaker.name}`);
-    })
-    .catch(err => {
-      console.warn('EmailJS error:', err);
-    });
+  // Delay prevents rate limit issues
+  setTimeout(() => {
+    emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, params)
+      .then(res => {
+        console.log("✅ Email SENT", res);
+        showToast(`📧 Caretaker alerted: ${med.caretaker.name}`);
+      })
+      .catch(err => {
+        console.error("❌ Email FAILED", err);
+      });
+  }, delay);
 }
 
 // ═══════════════════════════════════════════
