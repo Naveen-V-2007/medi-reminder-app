@@ -1051,11 +1051,10 @@ function fireGroupNotification(patientName, meds) {
       data: { speak: msg }
     });
   }
-
-  meds.forEach(m => {
-    logNotification(patientName, msg);
-    sendCaretakerEmail(m, 'reminder');
-  });
+meds.forEach((m, i) => {
+  logNotification(patientName, msg);
+  sendCaretakerEmail(m, 'reminder', i * 3000);
+});
 }
 
 // ═══════════════════════════════════════════
@@ -1163,7 +1162,8 @@ function renderDashboard() {
               <td>
                 <div class="colour-dot" style="background:${m.colour.hex}"></div>
                 <strong>${m.medName}</strong><br/>
-                <button onclick="searchMedicine('${m.medName}')" 
+                <button onclick="searchMedicine(this.dataset.med)"
+                       data-med="${m.medName}"
                         class="btn-primary"
                         style="padding:6px 10px; font-size:0.75rem; margin-top:4px;">
                       🔍 Info
