@@ -31,7 +31,7 @@ self.addEventListener('fetch', e => {
       const clone = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, clone));
       return res;
-    })).catch(() => caches.match('/index.html'))
+    })).catch(() => caches.match('/medi-reminder-app/index.html'))
   );
 });
  
@@ -49,8 +49,8 @@ self.addEventListener('push', e => {
   e.waitUntil(
     self.registration.showNotification(data.title || '💊 Medicine Reminder', {
       body: data.body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/medi-reminder-app/icon-192.png',
+      badge: '/medi-reminder-app/icon-192.png',
       vibrate: [200, 100, 200, 100, 200],
       requireInteraction: true,
       data: data
@@ -105,7 +105,7 @@ async function checkMedicines() {
         const speakText = `${med.patientName}, take your ${med.medName} — ${med.colour?.name || ''} tablet — now`;
         await self.registration.showNotification('💊 Medicine Reminder', {
           body: speakText,
-          icon: '/icon-192.png',
+          icon: '/medi-reminder-app/icon-192.png',
           vibrate: [300, 100, 300, 100, 300],
           requireInteraction: true,
           tag: `med_${med.id}_${currentTime}`,
@@ -122,8 +122,8 @@ async function checkMedicines() {
         const speakText = `${med.patientName}, please refill ${med.medName}. Only ${med.stock} tablet(s) left!`;
         await self.registration.showNotification('⚠ Low Stock Alert', {
           body: speakText,
-          icon: '/medi-reminder-app/icon-192.png'
-          badge: '/medi-reminder-app/icon-192.png'
+          icon: '/medi-reminder-app/icon-192.png',
+          badge: '/medi-reminder-app/icon-192.png',
           vibrate: [200, 100, 200],
           requireInteraction: true,
           tag: `stock_${med.id}`,
@@ -169,7 +169,4 @@ self.addEventListener('message', e => {
  
 // ── PERIODIC ALARM via setTimeout loop (fallback when no PeriodicSync)
 // This runs as long as SW is alive
-function startInternalClock() {
-  setInterval(() => checkMedicines(), 60000);
-}
-startInternalClock();
+
