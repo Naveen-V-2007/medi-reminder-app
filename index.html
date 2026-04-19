@@ -1162,7 +1162,8 @@ function renderDashboard() {
             <tr>
               <td>
                 <div class="colour-dot" style="background:${m.colour.hex}"></div>
-                <strong>${m.medName}</strong>
+                <strong onclick="searchMedicine('${m.medName}')" style="cursor:pointer; text-decoration:underline;">${m.medName}</strong>
+
                 <small style="color:var(--text2);display:block;margin-top:2px;">${m.colour.name} · ${m.doses} dose/intake</small>
               </td>
               <td>${Object.entries(m.schedule).map(([s,t]) => `<span class="time-pill">${s} ${t}</span>`).join('')}</td>
@@ -1360,6 +1361,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+function searchMedicine(name) {
+  const url = `https://www.drugs.com/search.php?searchterm=${encodeURIComponent(name)}`;
+  window.open(url, '_blank');
+}
 </script>
 </body>
 </html>
